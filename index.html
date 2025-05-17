@@ -68,7 +68,7 @@
         trash: types
       };
 
-      fetch("https://script.google.com/macros/s/AKfycbzeqRofoHNQnG6n4bziFzAfCHUSS21poexd9pb1YktCfnzqR1v2bKglt-IIRxY8EfDxgQ/exec", {
+      fetch("https://script.google.com/macros/s/AKfycbwONI00P8j8kJzvW05qt9bDTI_5lSH_zhJvPr8CgVqFbVYgxCroKnqxd3PMkSTjqVrE/exec", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -104,7 +104,7 @@
     }
 
     // 初期ロード時に既存データを表示
-    fetch("https://script.google.com/macros/s/AKfycbzeqRofoHNQnG6n4bziFzAfCHUSS21poexd9pb1YktCfnzqR1v2bKglt-IIRxY8EfDxgQ/exec")
+    fetch("https://script.google.com/macros/s/AKfycbwONI00P8j8kJzvW05qt9bDTI_5lSH_zhJvPr8CgVqFbVYgxCroKnqxd3PMkSTjqVrE/exec")
       .then(response => response.json())
       .then(data => {
         data.forEach(entry => {
