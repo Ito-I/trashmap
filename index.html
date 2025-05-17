@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ごみ拾いマップ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; }
+    h2 { margin: 10px; }
+    #map { height: 80vh; width: 100%; }
+    #form { padding: 10px; background: #f0f0f0; }
+    label { display: block; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <h2>ごみ拾いマップ</h2>
+  <p>地図をクリックして位置を指定し、情報を入力してください。</p>
+
+  <div id="map"></div>
+  <div id="form" style="display: none;">
+    <form id="trashForm">
+      <label>時間帯:
+        <select id="timeOfDay" required>
+          <option value="">選択してください</option>
+          <option value="朝">朝</option>
+          <option value="昼">昼</option>
+          <option value="夜">夜</option>
+        </select>
+      </label>
+      <label>ごみの種類（自由記入可）:
+        <input type="text" id="trashType" placeholder="例: 空き缶, ペットボトル" required>
+      </label>
+      <button type="submit">記録する</button>
+    </form>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([35.0, 135.0], 5);
+    let currentLatLng = null;
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    map.on('click', function(e) {
+      currentLatLng = e.latlng;
+      document.getElementById("form").style.display = "block";
+    });
+
+    document.getElementById("trashForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const time = document.getElementById("timeOfDay").value;
+      const types = document.getElementById("trashType").value.trim();
+
+      if (!currentLatLng || !time || types === "") {
+        alert("すべての項目を入力してください。");
+        return;
+      }
+
+      const postData = {
+        lat: currentLatLng.lat,
+        lng: currentLatLng.lng,
+        time: time,
+        trash: types
+      };
+
+      fetch("https://script.google.com/macros/s/AKfycbyRBC6k3btAaoNxuIeu96cwE6MsH4demUfjAnJEh644Whx1rDANGhPSjf7ZD4ErZpyi/exec", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(postData)
+      })
+      .then(res => res.ok ? res.text() : Promise.reject("送信失敗"))
+      .then(() => {
+        alert("記録が送信されました！");
+        addMarker(currentLatLng, time, types);
+        document.getElementById("trashForm").reset();
+        document.getElementById("form").style.display = "none";
+      })
+      .catch(err => {
+        alert("送信に失敗しました。");
+        console.error(err);
+      });
+    });
+
+    function addMarker(latlng, time, types) {
+      let color = "gray";
+      if (time === "朝") color = "lightblue";
+      else if (time === "昼") color = "orange";
+      else if (time === "夜") color = "darkblue";
+
+      const marker = L.circleMarker(latlng, {
+        radius: 8,
+        color: color,
+        fillColor: color,
+        fillOpacity: 0.8
+      }).addTo(map);
+      marker.bindPopup(`時間帯: ${time}<br>ごみの種類: ${types}`);
+    }
+
+    // 初期ロード時に既存データを表示
+    fetch("https://script.google.com/macros/s/AKfycbyRBC6k3btAaoNxuIeu96cwE6MsH4demUfjAnJEh644Whx1rDANGhPSjf7ZD4ErZpyi/exec")
+      .then(response => response.json())
+      .then(data => {
+        data.forEach(entry => {
+          const latlng = [parseFloat(entry.lat), parseFloat(entry.lng)];
+          addMarker(latlng, entry.time, entry.trash);
+        });
+      })
+      .catch(err => console.error("データ読み込みエラー:", err));
+  </script>
+</body>
+</html>
